@@ -24,7 +24,6 @@
         .hint {
             font-style: italic;
             margin-bottom: 20px;
-            display: none; /* 🚀 Hidden by default */
         }
         .code-box {
             display: none;
@@ -55,7 +54,7 @@
 <body>
     <div class="container">
         <h1>Orbis Arcana</h1>
-        <p id="hintMessage" class="hint"></p> <!-- 🚀 Hidden initially -->
+        <p id="hintMessage" class="hint">Loading...</p> <!-- 🚀 Shows Firestore message OR default text -->
         <button class="reveal-btn" onclick="revealCode()">Reveal the Secret</button>
         <p id="secretCode" class="code-box"></p>
         <p id="errorMessage" class="error"></p>
@@ -66,7 +65,9 @@
     import { db } from "./firebase-config.js";
     import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 
-    async function revealCode() {
+    let secretCode = ""; // 🔒 Store secret code globally
+
+    async function fetchSecretData() {
         const urlParams = new URLSearchParams(window.location.search);
         const codeId = urlParams.get("code"); // Get unique ID from URL
 
@@ -83,22 +84,16 @@
                 const data = codeSnap.data();
                 console.log("✅ Firestore Data:", data); // Debugging
 
+                // ✅ Store the secret code but keep it hidden
                 if (data.secretCode) {
-                    // ✅ Show secret code only after button click
-                    document.getElementById("secretCode").innerText = `Secret Code: ${data.secretCode}`;
-                    document.getElementById("secretCode").style.display = "block";
-
-                    // ✅ If Firestore has a message, display it
-                    if (data.message) {
-                        const hintElement = document.getElementById("hintMessage");
-                        hintElement.innerText = data.message;
-                        hintElement.style.display = "block"; // 🚀 Show only if available
-                    }
-
-                    document.getElementById("errorMessage").innerText = "";
+                    secretCode = data.secretCode;
                 } else {
-                    document.getElementById("errorMessage").innerText = "Secret Code not found!";
+                    secretCode = "Unknown Code";
                 }
+
+                // ✅ If Firestore has a message, show it; else show default text
+                const hintElement = document.getElementById("hintMessage");
+                hintElement.innerText = data.message || "You have found the right place. Click below to unveil the secret...";
             } else {
                 document.getElementById("errorMessage").innerText = "Invalid QR Code!";
             }
@@ -107,6 +102,18 @@
             document.getElementById("errorMessage").innerText = "Error loading secret.";
         }
     }
+
+    function revealCode() {
+        if (secretCode) {
+            document.getElementById("secretCode").innerText = `Secret Code: ${secretCode}`;
+            document.getElementById("secretCode").style.display = "block";
+        } else {
+            document.getElementById("errorMessage").innerText = "Secret Code not found!";
+        }
+    }
+
+    // ✅ Fetch data on page load but keep secret code hidden
+    fetchSecretData();
 
     // ✅ Ensure function is accessible in the browser
     window.revealCode = revealCode;
