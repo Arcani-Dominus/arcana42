@@ -24,6 +24,8 @@
         .hint {
             font-style: italic;
             margin-bottom: 20px;
+            min-height: 40px; /* Prevents text jump when typing starts */
+            white-space: pre-wrap; /* Ensures multiline effect */
         }
         .code-box {
             display: none;
@@ -54,7 +56,7 @@
 <body>
     <div class="container">
         <h1>Orbis Arcana</h1>
-        <p id="hintMessage" class="hint">Loading...</p> <!-- 🚀 Shows Firestore message OR default text -->
+        <p id="hintMessage" class="hint"></p> <!-- 🚀 Typewriter Effect Here -->
         <button class="reveal-btn" onclick="revealCode()">Reveal the Secret</button>
         <p id="secretCode" class="code-box"></p>
         <p id="errorMessage" class="error"></p>
@@ -91,9 +93,9 @@
                     secretCode = "Unknown Code";
                 }
 
-                // ✅ If Firestore has a message, show it; else show default text
-                const hintElement = document.getElementById("hintMessage");
-                hintElement.innerText = data.message || "You have found the right place. Click below to unveil the secret...";
+                // ✅ Typewriter effect for message
+                const message = data.message || "You have found the right place. Click below to unveil the secret...";
+                typeWriterEffect(message);
             } else {
                 document.getElementById("errorMessage").innerText = "Invalid QR Code!";
             }
@@ -109,6 +111,14 @@
             document.getElementById("secretCode").style.display = "block";
         } else {
             document.getElementById("errorMessage").innerText = "Secret Code not found!";
+        }
+    }
+
+    // ✅ Typewriter Effect Function
+    function typeWriterEffect(text, i = 0) {
+        if (i < text.length) {
+            document.getElementById("hintMessage").innerText += text.charAt(i);
+            setTimeout(() => typeWriterEffect(text, i + 1), 50); // Adjust typing speed (50ms)
         }
     }
 
