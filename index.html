@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orbis Arcana - The Hidden Path</title>
+    <title>Secret Code</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         body {
@@ -32,6 +32,10 @@
             padding: 10px;
             border: 1px dashed #d4af37;
         }
+        .error {
+            color: red;
+            font-size: 18px;
+        }
         .reveal-btn {
             background: none;
             border: 2px solid #d4af37;
@@ -50,14 +54,34 @@
 <body>
     <div class="container">
         <h1>Orbis Arcana</h1>
-        <p class="hint">"You have found the right place. The whispers of the wind have guided you well. Click below to unveil the secret..."</p>
+        <p class="hint">"You have found the right place. Click below to unveil the secret..."</p>
         <button class="reveal-btn" onclick="revealCode()">Reveal the Secret</button>
-        <p id="secretCode" class="code-box">ARCANA42</p>
+        <p id="secretCode" class="code-box"></p>
+        <p id="errorMessage" class="error"></p>
     </div>
-    
-    <script>
-        function revealCode() {
-            document.getElementById("secretCode").style.display = "block";
+
+    <script type="module">
+        import { db, doc, getDoc } from "./firebase-config.js";
+
+        async function revealCode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const codeId = urlParams.get("code"); // Unique ID from URL
+
+            if (!codeId) {
+                document.getElementById("errorMessage").innerText = "Invalid QR Code!";
+                return;
+            }
+
+            const codeRef = doc(db, "codes", codeId);
+            const codeSnap = await getDoc(codeRef);
+
+            if (codeSnap.exists()) {
+                document.getElementById("secretCode").innerText = codeSnap.data().secretCode;
+                document.getElementById("secretCode").style.display = "block";
+                document.getElementById("errorMessage").innerText = "";
+            } else {
+                document.getElementById("errorMessage").innerText = "Invalid QR Code!";
+            }
         }
     </script>
 </body>
