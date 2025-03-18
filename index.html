@@ -1,77 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secret Code</title>
-    <link rel="stylesheet" href="styles.css">
-    <style>
-        body {
-            background-color: #0a0a0a;
-            color: #d4af37;
-            font-family: 'Arial', sans-serif;
-            text-align: center;
-            padding: 50px;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            padding: 20px;
-            border: 2px solid #d4af37;
-            border-radius: 10px;
-            box-shadow: 0px 0px 15px #d4af37;
-        }
-        .hint {
-            font-style: italic;
-            margin-bottom: 20px;
-        }
-        .code-box {
-            display: none;
-            font-size: 24px;
-            margin-top: 20px;
-            padding: 10px;
-            border: 1px dashed #d4af37;
-        }
-        .error {
-            color: red;
-            font-size: 18px;
-        }
-        .reveal-btn {
-            background: none;
-            border: 2px solid #d4af37;
-            color: #d4af37;
-            padding: 10px 20px;
-            font-size: 18px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        .reveal-btn:hover {
-            background-color: #d4af37;
-            color: #0a0a0a;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Orbis Arcana</h1>
-        <p class="hint">"You have found the right place. Click below to unveil the secret..."</p>
-        <button class="reveal-btn" onclick="revealCode()">Reveal the Secret</button>
-        <p id="secretCode" class="code-box"></p>
-        <p id="errorMessage" class="error"></p>
-    </div>
+<script type="module">
+    import { db } from "./firebase-config.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 
-    <script type="module">
-        import { db, doc, getDoc } from "./firebase-config.js";
+    async function revealCode() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const codeId = urlParams.get("code"); // Get unique ID from URL
 
-        async function revealCode() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const codeId = urlParams.get("code"); // Unique ID from URL
+        if (!codeId) {
+            document.getElementById("errorMessage").innerText = "Invalid QR Code!";
+            return;
+        }
 
-            if (!codeId) {
-                document.getElementById("errorMessage").innerText = "Invalid QR Code!";
-                return;
-            }
-
+        try {
             const codeRef = doc(db, "codes", codeId);
             const codeSnap = await getDoc(codeRef);
 
@@ -82,7 +22,11 @@
             } else {
                 document.getElementById("errorMessage").innerText = "Invalid QR Code!";
             }
+        } catch (error) {
+            console.error("❌ Error fetching secret code:", error);
+            document.getElementById("errorMessage").innerText = "Error loading secret.";
         }
-    </script>
-</body>
-</html>
+    }
+
+    window.revealCode = revealCode;
+</script>
