@@ -24,6 +24,7 @@
         .hint {
             font-style: italic;
             margin-bottom: 20px;
+            display: none; /* 🚀 Hidden by default */
         }
         .code-box {
             display: none;
@@ -54,7 +55,7 @@
 <body>
     <div class="container">
         <h1>Orbis Arcana</h1>
-        <p id="hintMessage" class="hint">Loading message...</p> <!-- ✅ Now correctly placed -->
+        <p id="hintMessage" class="hint"></p> <!-- 🚀 Hidden initially -->
         <button class="reveal-btn" onclick="revealCode()">Reveal the Secret</button>
         <p id="secretCode" class="code-box"></p>
         <p id="errorMessage" class="error"></p>
@@ -62,49 +63,54 @@
 
     <!-- ✅ Firebase & Secret Code Script -->
     <script type="module">
-        import { db } from "./firebase-config.js";
-        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
+    import { db } from "./firebase-config.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 
-        async function revealCode() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const codeId = urlParams.get("code"); // Get unique ID from URL
+    async function revealCode() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const codeId = urlParams.get("code"); // Get unique ID from URL
 
-            if (!codeId) {
-                document.getElementById("errorMessage").innerText = "Invalid QR Code!";
-                return;
-            }
-
-            try {
-                const codeRef = doc(db, "codes", codeId);
-                const codeSnap = await getDoc(codeRef);
-
-                if (codeSnap.exists()) {
-                    const data = codeSnap.data();
-                    console.log("✅ Firestore Data:", data); // Debugging
-
-                    if (data.secretCode) {
-                        // ✅ Set the secret code
-                        document.getElementById("secretCode").innerText = `Secret Code: ${data.secretCode}`;
-                        document.getElementById("secretCode").style.display = "block";
-
-                        // ✅ Set the custom message if available
-                        document.getElementById("hintMessage").innerText = data.message || "You have found the right place. Click below to unveil the secret...";
-
-                        document.getElementById("errorMessage").innerText = "";
-                    } else {
-                        document.getElementById("errorMessage").innerText = "Secret Code not found!";
-                    }
-                } else {
-                    document.getElementById("errorMessage").innerText = "Invalid QR Code!";
-                }
-            } catch (error) {
-                console.error("❌ Error fetching secret code:", error);
-                document.getElementById("errorMessage").innerText = "Error loading secret.";
-            }
+        if (!codeId) {
+            document.getElementById("errorMessage").innerText = "Invalid QR Code!";
+            return;
         }
 
-        // ✅ Call function on page load
-        revealCode();
-    </script>
+        try {
+            const codeRef = doc(db, "codes", codeId);
+            const codeSnap = await getDoc(codeRef);
+
+            if (codeSnap.exists()) {
+                const data = codeSnap.data();
+                console.log("✅ Firestore Data:", data); // Debugging
+
+                if (data.secretCode) {
+                    // ✅ Show secret code only after button click
+                    document.getElementById("secretCode").innerText = `Secret Code: ${data.secretCode}`;
+                    document.getElementById("secretCode").style.display = "block";
+
+                    // ✅ If Firestore has a message, display it
+                    if (data.message) {
+                        const hintElement = document.getElementById("hintMessage");
+                        hintElement.innerText = data.message;
+                        hintElement.style.display = "block"; // 🚀 Show only if available
+                    }
+
+                    document.getElementById("errorMessage").innerText = "";
+                } else {
+                    document.getElementById("errorMessage").innerText = "Secret Code not found!";
+                }
+            } else {
+                document.getElementById("errorMessage").innerText = "Invalid QR Code!";
+            }
+        } catch (error) {
+            console.error("❌ Error fetching secret code:", error);
+            document.getElementById("errorMessage").innerText = "Error loading secret.";
+        }
+    }
+
+    // ✅ Ensure function is accessible in the browser
+    window.revealCode = revealCode;
+</script>
+
 </body>
 </html>
