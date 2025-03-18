@@ -54,7 +54,7 @@
 <body>
     <div class="container">
         <h1>Orbis Arcana</h1>
-        <p class="hint">"You have found the right place. Click below to unveil the secret..."</p>
+        <p id="hintMessage" class="hint">Loading message...</p> <!-- ✅ Now correctly placed -->
         <button class="reveal-btn" onclick="revealCode()">Reveal the Secret</button>
         <p id="secretCode" class="code-box"></p>
         <p id="errorMessage" class="error"></p>
@@ -66,12 +66,10 @@
         import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 
         async function revealCode() {
-            console.log("🔄 Fetching secret code...");
             const urlParams = new URLSearchParams(window.location.search);
-            const codeId = urlParams.get("code"); // Get the unique document ID from URL
+            const codeId = urlParams.get("code"); // Get unique ID from URL
 
             if (!codeId) {
-                console.error("❌ No code ID found in URL!");
                 document.getElementById("errorMessage").innerText = "Invalid QR Code!";
                 return;
             }
@@ -81,12 +79,22 @@
                 const codeSnap = await getDoc(codeRef);
 
                 if (codeSnap.exists()) {
-                    console.log("✅ Secret Code Found:", codeSnap.data().secretCode);
-                    document.getElementById("secretCode").innerText = codeSnap.data().secretCode;
-                    document.getElementById("secretCode").style.display = "block";
-                    document.getElementById("errorMessage").innerText = "";
+                    const data = codeSnap.data();
+                    console.log("✅ Firestore Data:", data); // Debugging
+
+                    if (data.secretCode) {
+                        // ✅ Set the secret code
+                        document.getElementById("secretCode").innerText = `Secret Code: ${data.secretCode}`;
+                        document.getElementById("secretCode").style.display = "block";
+
+                        // ✅ Set the custom message if available
+                        document.getElementById("hintMessage").innerText = data.message || "You have found the right place. Click below to unveil the secret...";
+
+                        document.getElementById("errorMessage").innerText = "";
+                    } else {
+                        document.getElementById("errorMessage").innerText = "Secret Code not found!";
+                    }
                 } else {
-                    console.warn("⚠️ No matching document found in Firestore.");
                     document.getElementById("errorMessage").innerText = "Invalid QR Code!";
                 }
             } catch (error) {
@@ -95,8 +103,8 @@
             }
         }
 
-        // ✅ Auto-run function when page loads
-        window.revealCode = revealCode;
+        // ✅ Call function on page load
+        revealCode();
     </script>
 </body>
 </html>
